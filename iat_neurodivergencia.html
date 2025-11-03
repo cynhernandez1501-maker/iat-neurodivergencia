@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>IAT — Neurodivergencias (versión educativa)</title>
+<style>
+  :root{
+    --bg:#f6fbfb;
+    --card:#ffffff;
+    --accent:#cfe8e8;
+    --muted:#6b6b6b;
+    --text:#0b2b2b;
+    --button:#89c9c9;
+    --danger:#ff6b6b;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  body{
+    margin:0;
+    background: linear-gradient(180deg, var(--bg), #f8fcfc);
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:24px;
+  }
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    box-shadow: 0 6px 18px rgba(6,22,23,0.08);
+    width:900px;
+    max-width:96%;
+    padding:28px;
+  }
+  h1{margin:0 0 6px 0;font-size:20px}
+  p.lead{margin:0 0 18px 0;color:var(--muted)}
+  .center{display:flex;align-items:center;justify-content:center;flex-direction:column}
+  .stim{
+    font-size:44px;
+    margin:28px 0;
+    min-height:70px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .labels{
+    display:flex;
+    justify-content:space-between;
+    width:100%;
+    font-weight:600;
+    font-size:16px;
+    color:var(--muted);
+  }
+  .kbd{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);margin-left:8px;font-weight:700}
+  .btn{
+    background:var(--button);
+    border:none;padding:10px 16px;border-radius:10px;font-weight:700;cursor:pointer;margin:8px;
+  }
+  .small{font-size:13px;color:var(--muted)}
+  .progress{height:10px;background:#e9f6f6;border-radius:8px;overflow:hidden;margin-top:12px}
+  .progress > div{height:100%;background:linear-gradient(90deg,#89c9c9,#bfecec);width:0%}
+  .footer{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+  input[type="text"]{padding:10px;border-radius:8px;border:1px solid #e0e0e0;width:320px}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{border:1px solid #f0f0f0;padding:6px;font-size:12px;text-align:left}
+  .muted{color:var(--muted)}
+  .danger{color:var(--danger)}
+</style>
+</head>
+<body>
+<div class="card" id="app">
+  <h1>IAT: Neurodivergencias (versión educativa)</h1>
+  <p class="lead">Objetivo: explorar asociaciones implícitas entre <strong>neurodivergente</strong> y palabras <strong>positivas/negativas</strong>. Responde lo más rápido posible usando <span class="kbd">E</span> (izquierda) y <span class="kbd">I</span> (derecha).</p>
+
+  <div id="setup">
+    <label>Identificador del participante (ej. "Matricula123" o "Ana"): </label><br/>
+    <input id="pid" type="text" placeholder="Escribe un identificador..." /><br/>
+    <p class="small">Presiona comenzar cuando estés listo. Asegúrate de usar teclado, no touch.</p>
+    <div style="margin-top:12px">
+      <button class="btn" id="startBtn">Comenzar prueba</button>
+      <button class="btn" id="instructionsBtn">Ver instrucciones completas</button>
+    </div>
+    <div style="margin-top:10px;color:var(--muted);font-size:13px">
+      <strong>Tiempo estimado:</strong> ~4–7 minutos por participante (varía según velocidad).<br/>
+      <strong>Nota:</strong> Los datos se descargarán en un archivo .csv al finalizar.
+    </div>
+  </div>
+
+  <div id="instructions" style="display:none;margin-top:12px">
+    <h3>Instrucciones</h3>
+    <ol>
+      <li>En cada ensayo verás una palabra en el centro. Clasifícala según las categorías que aparecen en los costados (izquierda/derecha).</li>
+      <li>Presiona <span class="kbd">E</span> si la palabra pertenece a la categoría izquierda; <span class="kbd">I</span> si pertenece a la derecha.</li>
+      <li>Responde tan rápido como puedas, pero intenta ser preciso. Si te equivocas, aparecerá una X roja: corrige lo más rápido posible para continuar.</li>
+      <li>No uses el mouse; usa las teclas. La prueba alterna combinaciones de categorías; lee las etiquetas en cada bloque.</li>
+    </ol>
+    <button class="btn" id="closeInstructions">Cerrar</button>
+  </div>
+
+  <div id="task" style="display:none;margin-top:6px">
+    <div class="labels" id="labelRow">
+      <div id="leftLabel">Izquierda</div>
+      <div id="rightLabel">Derecha</div>
+    </div>
+
+    <div class="center">
+      <div class="stim" id="stimulus">—</div>
+      <div class="small muted" id="trialInfo">Bloque 1 · Ensayo 1 / 1</div>
+      <div class="progress" aria-hidden="true"><div id="progressBar"></div></div>
+      <div style="margin-top:10px" class="small muted">Teclas: <span class="kbd">E</span> izquierda  ·  <span class="kbd">I</span> derecha</div>
+      <div id="feedback" style="height:26px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div id="result" style="display:none;margin-top:12px">
+    <h3>Resultados</h3>
+    <div id="summary"></div>
+    <div style="margin-top:10px">
+      <button class="btn" id="downloadBtn">Descargar .csv</button>
+      <button class="btn" id="restartBtn">Reiniciar</button>
+    </div>
+    <h4 style="margin-top:18px">Datos (vista previa)</h4>
+    <div style="max-height:220px;overflow:auto">
+      <table id="dataTable"><thead><tr><th>pid</th><th>bloque</th><th>ensayo</th><th>tipo</th><th>estímulo</th><th>respuesta</th><th>acierto</th><th>rt_ms</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* IAT educativo — Neurodivergencias
+   Guarda CSV y calcula D-score aproximado.
+   Autor: entregado por asistente (Cynthia).
+*/
+
+(() => {
+  // --- Configuración de estímulos (en español)
+  const stimuli = {
+    neurodiv: ["Autismo","TDAH","Dislexia","Asperger","Neurodivergente","Diversidad mental"],
+    neurotip: ["Neurotípico","Estándar","Convencional","Normal","Típico","Promedio"],
+    positive: ["Creativo","Capaz","Inteligente","Talentoso","Admirable","Valioso"],
+    negative: ["Problemático","Limitado","Extraño","Difícil","Incapaz","Inadecuado"]
+  };
+
+  // Bloques (versión abreviada)
+  // block: {id, name, type, nTrials, leftCategories, rightCategories}
+  // type: "practice" | "valence" | "combined"
+  const blocksTemplate = [
+    {id:1, name:"Práctica: Categorías (Neurodivergente / Neurotípico)", type:"practice", n:12, left:["neurodiv"], right:["neurotip"]},
+    {id:2, name:"Práctica: Valencia (Positivo / Negativo)", type:"practice", n:12, left:["positive"], right:["negative"]},
+    // Combined A (order randomized between participants)
+    {id:3, name:"Combinado 1", type:"combined", n:24, left:null, right:null},
+    {id:4, name:"Inversión: Categorías (lado opuesto)", type:"practice", n:12, left:null, right:null}, // will be set as reversed version of block1
+    {id:5, name:"Combinado 2", type:"combined", n:24, left:null, right:null}
+  ];
+
+  // Key mapping
+  const KEY_E = "KeyE";
+  const KEY_I = "KeyI";
+  // RT limits
+  const MIN_RT = 300; // ms
+  const MAX_RT = 10000; // ms
+  const ERROR_PENALTY = 600; // ms to add to mean for error replacement
+
+  // State
+  let pid = "";
+  let blocks = [];
+  let currentBlockIndex = 0;
+  let trialIndex = 0;
+  let trialOrder = []; // sequence of stimuli objects for current block
+  let trialStart = 0;
+  let results = []; // array of trial records
+  let mappingFirstCombinedIsNeurodivPositive = Math.random() < 0.5; // counterbalance
+  let leftKey = KEY_E, rightKey = KEY_I;
+
+  // DOM
+  const setupEl = document.getElementById("setup");
+  const startBtn = document.getElementById("startBtn");
+  const instructionsBtn = document.getElementById("instructionsBtn");
+  const instructionsPanel = document.getElementById("instructions");
+  const closeInstructions = document.getElementById("closeInstructions");
+  const taskEl = document.getElementById("task");
+  const labelLeft = document.getElementById("leftLabel");
+  const labelRight = document.getElementById("rightLabel");
+  const stimEl = document.getElementById("stimulus");
+  const trialInfo = document.getElementById("trialInfo");
+  const progressBar = document.getElementById("progressBar");
+  const feedback = document.getElementById("feedback");
+  const resultEl = document.getElementById("result");
+  const summaryEl = document.getElementById("summary");
+  const dataTableBody = document.querySelector("#dataTable tbody");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const restartBtn = document.getElementById("restartBtn");
+  const pidInput = document.getElementById("pid");
+
+  instructionsBtn.onclick = () => { instructionsPanel.style.display="block"; setupEl.style.display="none"; }
+  closeInstructions.onclick = () => { instructionsPanel.style.display="none"; setupEl.style.display="block"; }
+
+  startBtn.onclick = startExperiment;
+  restartBtn.onclick = () => location.reload();
+
+  function startExperiment(){
+    pid = pidInput.value.trim() || ("P" + (new Date().getTime() % 100000));
+    // prepare block order based on mapping
+    blocks = JSON.parse(JSON.stringify(blocksTemplate)); // deep copy
+    // Define combined mappings:
+    // If mappingFirstCombinedIsNeurodivPositive true:
+    //  combined1: left = neurodiv + positive ; right = neurotip + negative
+    //  combined2: reversed
+    if (mappingFirstCombinedIsNeurodivPositive){
+      blocks[2].left = ["neurodiv","positive"]; blocks[2].right = ["neurotip","negative"];
+      blocks[3].left = ["neurotip"]; blocks[3].right = ["neurodiv"]; // inverted categories for block 4
+      blocks[4].left = ["neurotip","positive"]; blocks[4].right = ["neurodiv","negative"];
+    } else {
+      blocks[2].left = ["neurotip","positive"]; blocks[2].right = ["neurodiv","negative"];
+      blocks[3].left = ["neurotip"]; blocks[3].right = ["neurodiv"]; // inverted
+      blocks[4].left = ["neurodiv","positive"]; blocks[4].right = ["neurotip","negative"];
+    }
+    // For block 4 (inversion practice), we show single categories reversed from block1:
+    // block1 was neurodiv left, neurotip right. If block3 mapping first had neurodiv on left originally, block4 must reverse.
+    // We'll set block4 labels to reflect reversal of block1:
+    blocks[3].left = blocks[0].right ? blocks[0].right : ["neurotip"];
+    blocks[3].right = blocks[0].left ? blocks[0].left : ["neurodiv"];
+
+    // hide setup
+    setupEl.style.display = "none";
+    instructionsPanel.style.display = "none";
+    taskEl.style.display = "block";
+    currentBlockIndex = 0;
+    trialIndex = 0;
+    results = [];
+    showBlock();
+  }
+
+  function showBlock(){
+    feedback.innerHTML = "";
+    const block = blocks[currentBlockIndex];
+    // Build trial order for this block
+    trialOrder = buildTrialsForBlock(block);
+    trialIndex = 0;
+    renderLabels(block);
+    showTrial();
+  }
+
+  function buildTrialsForBlock(block){
+    const arr = [];
+    // For practice blocks that have categories specified as keys (e.g., ["neurodiv"] etc.)
+    // Each trial: {type:categoryKey, label: text}
+    const categoriesLeft = block.left;
+    const categoriesRight = block.right;
+    // Build pool of stimuli depending on allowed categories in block
+    // For practice single-category blocks, will show stimuli only from those categories.
+    const allowed = [];
+    if (Array.isArray(categoriesLeft)) categoriesLeft.forEach(k => allowed.push({k,side:"left"}));
+    if (Array.isArray(categoriesRight)) categoriesRight.forEach(k => allowed.push({k,side:"right"}));
+    // Determine vocabulary for each category key
+    function getPool(key){
+      if (key === "neurodiv") return stimuli.neurodiv.slice();
+      if (key === "neurotip") return stimuli.neurotip.slice();
+      if (key === "positive") return stimuli.positive.slice();
+      if (key === "negative") return stimuli.negative.slice();
+      return [];
+    }
+    // For block.n trials, randomly pick from combined allowed pools
+    // We'll ensure relatively balanced representation by cycling through categories
+    const perCat = Math.ceil(block.n / allowed.length);
+    allowed.forEach(cat => {
+      let pool = getPool(cat.k);
+      // replicate pool if small
+      while(pool.length < perCat){
+        pool = pool.concat(pool);
+      }
+      shuffleArray(pool);
+      for (let i=0;i<perCat && arr.length < block.n;i++){
+        arr.push({
+          blockId: block.id,
+          blockName: block.name,
+          type: block.type,
+          stim: pool[i],
+          stimCategory: cat.k,
+          correctSide: cat.side // 'left' or 'right'
+        });
+      }
+    });
+    shuffleArray(arr);
+    // ensure array length equals block.n
+    return arr.slice(0, block.n);
+  }
+
+  function renderLabels(block){
+    // Show left and right label text combining categories nicely
+    function catNames(arr){
+      if (!arr) return "";
+      return arr.map(k=>{
+        if (k==="neurodiv") return "Neurodivergente";
+        if (k==="neurotip") return "Neurotípico";
+        if (k==="positive") return "Positivo";
+        if (k==="negative") return "Negativo";
+        return k;
+      }).join(" + ");
+    }
+    labelLeft.textContent = catNames(block.left) || "Izquierda";
+    labelRight.textContent = catNames(block.right) || "Derecha";
+  }
+
+  function showTrial(){
+    const block = blocks[currentBlockIndex];
+    if (trialIndex >= trialOrder.length){
+      // block finished
+      currentBlockIndex++;
+      if (currentBlockIndex >= blocks.length){
+        endExperiment();
+        return;
+      } else {
+        // short pause between blocks
+        stimEl.textContent = "";
+        trialInfo.textContent = `Terminaste ${block.name}. Prepárate para ${blocks[currentBlockIndex].name}.`;
+        progressBar.style.width = "0%";
+        setTimeout(()=>{ renderLabels(blocks[currentBlockIndex]); trialOrder = buildTrialsForBlock(blocks[currentBlockIndex]); trialIndex = 0; showTrial(); }, 900);
+        return;
+      }
+    }
+    const trial = trialOrder[trialIndex];
+    // render stimulus
+    stimEl.textContent = trial.stim;
+    trialInfo.textContent = `${blocks[currentBlockIndex].name} · Ensayo ${trialIndex+1} / ${trialOrder.length}`;
+    const pct = Math.round(((trialIndex) / trialOrder.length) * 100);
+    progressBar.style.width = pct + "%";
+    feedback.innerHTML = "";
+    // start timer
+    trialStart = performance.now();
+    // Set a temporary handler for keydown for this trial
+    function onKey(e){
+      if (e.code !== KEY_E && e.code !== KEY_I) return;
+      const rt = Math.round(performance.now() - trialStart);
+      const pressedSide = (e.code === KEY_E) ? "left" : "right";
+      const correct = pressedSide === trial.correctSide;
+      // record
+      results.push({
+        pid,
+        block: blocks[currentBlockIndex].id,
+        blockName: blocks[currentBlockIndex].name,
+        trialInBlock: trialIndex+1,
+        blockType: blocks[currentBlockIndex].type,
+        stimulus: trial.stim,
+        stimCategory: trial.stimCategory,
+        pressedSide,
+        correct,
+        rt: rt
+      });
+      // provide feedback
+      if (!correct){
+        feedback.innerHTML = '<span class="danger">✖ Error — presiona la tecla correcta para continuar</span>';
+        // show X and wait for correct key before moving on; mark as error and continue timing (we record the error RT already).
+        // Wait for participant to press the correct side (not timing for scoring).
+        function onCorrectRecover(ev){
+          if ((ev.code === KEY_E && trial.correctSide==="left") || (ev.code === KEY_I && trial.correctSide==="right")){
+            document.removeEventListener("keydown", onCorrectRecover);
+            document.removeEventListener("keydown", onKey);
+            trialIndex++;
+            showTrial();
+          }
+        }
+        document.addEventListener("keydown", onCorrectRecover);
+      } else {
+        // good, move to next trial briefly
+        document.removeEventListener("keydown", onKey);
+        trialIndex++;
+        // small inter-trial interval
+        setTimeout(()=> showTrial(), 250);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+  }
+
+  function endExperiment(){
+    taskEl.style.display = "none";
+    resultEl.style.display = "block";
+    // compute D-score
+    const dResult = computeDScore(results, blocks);
+    // populate summary
+    let interp = interpretD(dResult.d);
+    summaryEl.innerHTML = `<strong>D-score (aprox.):</strong> ${dResult.d.toFixed(3)} <br/>
+      <strong>Condición compatible:</strong> ${dResult.compatibleLabel} · <strong>Media RT (ms):</strong> ${Math.round(dResult.meanCompatible)} <br/>
+      <strong>Condición incompatible:</strong> ${dResult.incompatibleLabel} · <strong>Media RT (ms):</strong> ${Math.round(dResult.meanIncompatible)} <br/>
+      <p class="muted">${interp}</p>`;
+
+    // populate data table preview (first 200 rows)
+    dataTableBody.innerHTML = "";
+    results.forEach(r=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${r.pid}</td><td>${r.block}</td><td>${r.trialInBlock}</td><td>${r.blockType}</td><td>${r.stimulus}</td><td>${r.pressedSide}</td><td>${r.correct}</td><td>${r.rt}</td>`;
+      dataTableBody.appendChild(tr);
+    });
+  }
+
+  downloadBtn.onclick = () => {
+    const csv = makeCSV(results);
+    const fname = `IAT_neurodivergencia_${pid.replace(/\s+/g,"_")}_${(new Date()).toISOString().slice(0,19).replace(/[:T]/g,"-")}.csv`;
+    downloadTextFile(csv, fname);
+  };
+
+  // --- Utilities ---
+  function shuffleArray(a){
+    for (let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  // Compute D-score simplified per Greenwald (approx).
+  // Use combined blocks 3 and 5 as critical blocks.
+  function computeDScore(allResults, blocksDef){
+    // Filter results by block id 3 and 5
+    const block3id = blocksDef[2].id;
+    const block5id = blocksDef[4].id;
+    const b3 = allResults.filter(r=> r.block === block3id);
+    const b5 = allResults.filter(r=> r.block === block5id);
+
+    // Exclude RTs < MIN_RT or > MAX_RT from mean calculation but keep them for count (they will be excluded)
+    function cleanAndReplaceErrors(blockTrials){
+      // compute mean of correct trials within MIN/MAX
+      const correctRTs = blockTrials.filter(t => t.correct && t.rt >= MIN_RT && t.rt <= MAX_RT).map(t=>t.rt);
+      const meanCorrect = correctRTs.length ? (correctRTs.reduce((a,b)=>a+b,0)/correctRTs.length) : null;
+      // create array of processed RTs where errors replaced by meanCorrect + ERROR_PENALTY
+      const processed = blockTrials.map(t=>{
+        if (t.rt < MIN_RT || t.rt > MAX_RT) return null; // mark excluded
+        if (t.correct) return t.rt;
+        // error: replace with meanCorrect + penalty (if meanCorrect null, fallback to t.rt + penalty)
+        return (meanCorrect !== null) ? (meanCorrect + ERROR_PENALTY) : (t.rt + ERROR_PENALTY);
+      }).filter(x=> x !== null);
+      return {processed, meanCorrect};
+    }
+
+    const proc3 = cleanAndReplaceErrors(b3);
+    const proc5 = cleanAndReplaceErrors(b5);
+
+    // Determine which block corresponds to "compatible" condition (Neurodivergente + Positivo)
+    // We set this earlier with mappingFirstCombinedIsNeurodivPositive
+    let compatibleBlock = mappingFirstCombinedIsNeurodivPositive ? block3id : block5id;
+    let incompatibleBlock = mappingFirstCombinedIsNeurodivPositive ? block5id : block3id;
+    let meanCompatible = (compatibleBlock === block3id) ? meanOfArray(proc3.processed) : meanOfArray(proc5.processed);
+    let meanIncompatible = (incompatibleBlock === block3id) ? meanOfArray(proc3.processed) : meanOfArray(proc5.processed);
+
+    // pooled sd across the two combined blocks (all processed trials)
+    const pooled = (compatibleBlock === block3id) ? proc3.processed.concat(proc5.processed) : proc5.processed.concat(proc3.processed);
+    const sd = sdOfArray(pooled);
+
+    const d = sd > 0 ? (meanIncompatible - meanCompatible) / sd : 0; // note sign: positive D => faster for compatible (neurodivergente+positivo) or viceversa depending on mapping; we've set as meanIncompatible - meanCompatible to match usual coding where positive means association with target+attribute? We'll interpret below.
+    // Build labels:
+    const compLabel = mappingFirstCombinedIsNeurodivPositive ? "Neurodivergente + Positivo" : "Neurodivergente + Negativo";
+    const incompLabel = mappingFirstCombinedIsNeurodivPositive ? "Neurodivergente + Negativo" : "Neurodivergente + Positivo";
+
+    return {
+      d: d,
+      meanCompatible: meanCompatible || 0,
+      meanIncompatible: meanIncompatible || 0,
+      sd,
+      compatibleLabel: compLabel,
+      incompatibleLabel: incompLabel,
+      nCompatible: (compatibleBlock === block3id) ? proc3.processed.length : proc5.processed.length,
+      nIncompatible: (incompatibleBlock === block3id) ? proc3.processed.length : proc5.processed.length
+    };
+  }
+
+  function meanOfArray(a){
+    if (!a || a.length===0) return 0;
+    return a.reduce((s,x)=>s+x,0)/a.length;
+  }
+  function sdOfArray(a){
+    if (!a || a.length<=1) return 0;
+    const m = meanOfArray(a);
+    const v = a.reduce((s,x)=> s + (x-m)*(x-m), 0) / (a.length - 1);
+    return Math.sqrt(v);
+  }
+
+  function interpretD(d){
+    // Use conventional thresholds (approx) but adjust for direction: 
+    // In our compute, positive d = meanIncompatible - meanCompatible / sd.
+    // If compatible = Neurodivergente+Positivo, a positive D means meanIncompatible > meanCompatible => faster on compatible => association positive with neurodivergencia.
+    // So: d > 0.35 strong association in direction of "compatible" pairing
+    if (d > 0.35) return "Asociación implícita moderada/fuerte en la dirección de la condición compatible (es decir: las respuestas fueron más rápidas cuando 'Neurodivergente' estuvo emparejado con la categoría que se definió como compatible). Interpreta con cautela en un contexto educativo.";
+    if (d < -0.35) return "Asociación implícita moderada/fuerte en la dirección opuesta a la condición compatible (es decir: las respuestas fueron más rápidas cuando 'Neurodivergente' estuvo emparejado con la categoría opuesta). Interpreta con cautela en un contexto educativo.";
+    return "Asociación implícita débil o neutra (valor cercano a 0). Recuerda: esto no mide actitudes conscientes, sino asociaciones automáticas y debe interpretarse con cuidado.";
+  }
+
+  function makeCSV(rows){
+    const header = ["pid","block","blockName","trialInBlock","blockType","stimCategory","stimulus","pressedSide","correct","rt_ms"];
+    const lines = [header.join(",")];
+    rows.forEach(r=>{
+      const line = [
+        escapeCSV(r.pid), r.block, escapeCSV(r.blockName), r.trialInBlock, r.blockType, r.stimCategory, escapeCSV(r.stimulus), r.pressedSide, r.correct, r.rt
+      ].join(",");
+      lines.push(line);
+    });
+    return lines.join("\n");
+  }
+  function escapeCSV(s){
+    if (s === null || s === undefined) return "";
+    const str = String(s);
+    if (str.includes(",") || str.includes('"') || str.includes("\n")){
+      return '"' + str.replace(/"/g,'""') + '"';
+    }
+    return str;
+  }
+  function downloadTextFile(text, filename){
+    const blob = new Blob([text], {type: "text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 1500);
+  }
+
+  // Allow participant to press space to start first trial (or we auto-start)
+  // But our logic auto-starts once showTrial is called.
+
+  // Add a brief note: pressing instructions toggles...
+  document.addEventListener("keydown", (e)=>{
+    // if task is visible and stimulus shown, ignore other keys
+    // This global listener is not needed because we bind per-trial; keep small handlers only.
+  });
+
+})();
+</script>
+</body>
+</html>
